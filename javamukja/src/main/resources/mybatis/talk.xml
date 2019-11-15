@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="spring.model.mapper.TalkInter">
+
+	<select id="read" parameterType="int" resultType="TalkDTO">
+		SELECT *,m.fname as MFname from talk t join member m on t.id = m.id
+		WHERE tno = #{tno}
+	</select>
+	
+	<select id="list" parameterType="Map" resultType="TalkDTO">
+		select tno, id, title, content, viewcnt, rcnt, fname, hashtag, category, rdate, MFname, r
+		from(
+		select tno, id, title, content, viewcnt, rcnt, fname, hashtag, category, rdate, MFname, @no:=@no+1 as r
+		from(
+		select t.tno, t.id, t.title, t.content, t.viewcnt, t.rcnt, t.fname, t.hashtag, t.category, DATE_FORMAT(t.rdate,'%Y-%m-%d') as rdate, m.fname as MFname, @no:=0 as no
+		from talk t join member m on t.id = m.id
+		<where>
+			<choose>
+				<when test="col=='id'">
+					id like concat('%',#{word},'%')
+
+				</when>
+				<when test="col=='title'">
+					title like concat('%',#{word},'%')
+				</when>
+				<when test="col=='content'">
+					content like concat('%',#{word},'%')
+				</when>
+				<when test="col=='hashtag'">
+					hashtag like concat('%',#{word},'%')
+				</when>
+				<when test="col=='title_content'">
+					title like concat('%',#{word},'%')
+					or
+					content like concat('%',#{word},'%')
+				</when>
+			</choose>
+		</where>
+			 order by tno desc
+			)talk_list
+		)talk_list2
+		<![CDATA[
+		where r >= #{sno} and r <= #{eno}
+		]]>
+	</select>
+	
+	<select id="list2" parameterType="Map" resultType="TalkDTO">
+		select tno, id, title, content, viewcnt, rcnt, fname, hashtag, category, rdate, r
+		from(
+		select tno, id, title, content, viewcnt, rcnt, fname, hashtag, category, rdate, @no+1 as r
+		from(
+		select tno, id, title, content, viewcnt, rcnt, fname, hashtag, category, DATE_FORMAT(rdate,'%Y-%m-%d') as rdate, @no:=0 as no
+		from talk
+		<where>
+			<choose>
+				<when test="col=='id'">
+					id like concat('%',#{word},'%')
+
+				</when>
+				<when test="col=='title'">
+					title like concat('%',#{word},'%')
+				</when>
+				<when test="col=='content'">
+					content like concat('%',#{word},'%')
+				</when>
+				<when test="col=='hashtag'">
+					hashtag like concat('%',#{word},'%')
+				</when>
+				<when test="col=='title_content'">
+					title like concat('%',#{word},'%')
+					or
+					content like concat('%',#{word},'%')
+				</when>
+			</choose>
+		</where>
+				order by tno desc
+			)talk_list
+		)talk_list2
+		<![CDATA[
+		where r >= #{sno} and r <= #{eno}
+		]]>
+	</select>
+	<select id="total" parameterType="Map" resultType="int">
+		select count(*)
+		from talk
+		<where>
+			<choose>
+				<when test="col=='id'">
+					id like concat('%',#{word},'%')
+				</when>
+				<when test="col=='title'">
+					title like concat('%',#{word},'%')
+				</when>
+				<when test="col=='content'">
+					content like concat('%',#{word},'%')
+				</when>
+				<when test="col=='hashtag'">
+					hashtag like concat('%',#{word},'%')
+				</when>
+				<when test="col=='title_content'">
+					title like concat('%',#{word},'%')
+					or
+					content like concat('%',#{word},'%')
+				</when>
+			</choose>
+		</where>
+	</select>
+
+	<insert id="create" parameterType="TalkDTO">
+		insert into talk(id, title, content, hashtag, fname, category,rdate)
+		values(#{id}, #{title}, #{content}, #{hashtag}, #{fname}, #{category}, now())
+	</insert>
+	<update id="update" parameterType="TalkDTO">
+		update talk
+		set 
+			title=#{title},
+			fname=#{fname},
+			content=#{content},
+			hashtag =#{hashtag},
+			category=#{category}
+		where tno=#{tno}
+	</update>
+
+	<delete id="delete" parameterType="int">
+		DELETE
+		FROM talk
+		WHERE tno=#{tno}
+	</delete>
+
+	<select id="readReply" parameterType="int" resultType="TalkDTO">
+		SELECT
+		trno, id,tno,rdate, content
+		FROM talk
+		WHERE trno = #{trno}
+	</select>
+	<insert id="createReply" parameterType="TalkDTO">
+		insert into talkreply (trno, id, tno, rdate, content)
+		values(#{id}, #{tno}, now(), #{content})
+	</insert>
+	<select id="passCheck" parameterType="Map" resultType="int">
+		select
+		count(tno) as cnt
+		from talk
+		where tno = #{tno}
+		and passwd = #{passwd}
+	</select>
+	<select id="refnumCheck" parameterType="int" resultType="int">
+		select
+		count(*) from talk where refnum = #{tno}
+	</select>
+	
+	<update id="upRcnt" parameterType="int">
+		update talk 
+		set rcnt =
+		rcnt + 1
+		where tno = #{tno}
+	</update>
+	
+	<update id="upViewcnt" parameterType="int">
+		update talk 
+		set viewcnt =
+		viewcnt + 1
+		where tno = #{tno}
+	</update>
+</mapper>
+
+<!-- 블록설정 후 tab과 shift+tab -->

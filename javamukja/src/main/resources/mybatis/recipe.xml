@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="spring.model.mapper.RecipeInter">
+	<select id="read" parameterType="int" resultType="RecipeDTO">
+		SELECT rno, id, title, content, viewcnt, 
+		rcnt, fname, category, rdate, category, time, portion, ingredient FROM recipe          
+		WHERE rno = #{rno}                                
+	</select>
+	
+	<select id="preread" parameterType="int" resultType="String">
+		SELECT fname FROM recipe          
+		WHERE rno = #{rno}                                
+	</select>
+	
+	<select id="imgRead2" parameterType="int" resultType="Map">
+		SELECT rno, id, title, content, viewcnt, 
+		rcnt, fname, category, rdate, category, time, portion, ingredient
+		FROM recipe                                                               
+		WHERE rno = #{rno}                                                        
+	</select>
+	
+	
+	<select id="imgRead" parameterType="int" resultType="Map">
+	select * from 
+	(select #{rno}-2 as PRE_RNO2, #{rno}-1 as PRE_RNO1, rno as RNO, #{rno}+1 as NEX_RNO1, #{rno}+2 as NEX_RNO2, fname as FNAME from recipe) e
+	where rno = #{rno};
+	</select>
+	
+	
+<!-- 	<select id="imgRead3" parameterType="int" resultType="Map"> -->
+<!-- 		SELECT * FROM                                                   -->
+<!-- 		  (                                                             -->
+<!-- 		     select                                                     -->
+<!-- 		         max(rno) from recipe where rno PRE_RNO2,           -->
+<!-- 		         lag(rno,1,0)     over (order by rno) PRE_RNO1,          -->
+<!-- 		         rno,                                                   -->
+<!-- 		         lead(rno,1,0)    over (order by rno)NEX_RNO1,           -->
+<!-- 		         lead(rno,2,0)    over (order by rno)NEX_RNO2,           -->
+		                                                                  
+<!-- 		         lag(fname,2,0)  over (order by rno)PRE_FILE2,           -->
+<!-- 		         lag(fname,1,0)  over (order by rno)PRE_FILE1,          -->
+<!-- 		         fname,                                                 -->
+<!-- 		         lead(fname,1,0) over (order by rno)NEX_FILE1,           -->
+<!-- 		         lead(fname,2,0) over (order by rno)NEX_FILE2            -->
+<!-- 		         from (                                                 -->
+<!-- 		              SELECT rno, fname                                 -->
+<!-- 		              FROM recipe                                      -->
+<!-- 		              ORDER BY rno DESC                                 -->
+<!-- 		         )recipe_read                                                      -->
+<!-- 		  ) recipe_read2                                                         -->
+<!-- 		  WHERE rno = #{rno}                                  -->
+<!-- 	</select> -->
+
+	<select id="list" parameterType="Map" resultType="RecipeDTO">
+		select rno, id, title, viewcnt, rcnt, fname, category, rdate, r                        
+		from(                                                                                      
+		    select rno, id, title, viewcnt, rcnt, fname, category, rdate, @no:= @no+1 as r            
+		    from(                                                                              
+				select rno, id, title, viewcnt, rcnt, fname, category, DATE_FORMAT(rdate, '%Y-%m-%d') as rdate, @no:=0 as no
+			 	from recipe
+				<where>
+					<choose>
+						<when test="col=='id'">
+							id like concat('%',#{word},'%')
+						</when>
+						<when test="col=='title'">
+							title like concat('%', #{word},'%')
+						</when>
+						<when test="col=='content'">
+							content like concat('%',#{word},'%')
+						</when>
+						<when test="col=='title_content'">
+							title like concat('%', #{word},'%')
+							or
+							content like concat('%', #{word},'%')
+						</when>
+						
+					</choose>				
+				</where>
+				order by rno desc
+			)recipe_list2
+		)recipe_list
+		<![CDATA[
+		where r >= #{sno} and r <= #{eno}
+		]]>                       
+	</select>
+	<select id="total" parameterType="Map" resultType="int">
+		select count(*) from recipe
+		<where>
+			<choose>
+				<when test="col=='id'">
+					id like concat('%',#{word},'%')
+				</when>
+				<when test="col=='title'">
+					title like concat('%',#{word},'%')
+				</when>
+				<when test="col=='content'">
+					content like concat('%',#{word},'%')
+				</when>
+				<when test="col=='title_content'">
+					title like concat('%',#{word},'%')
+					or
+					content like concat('%',#{word},'%')
+				</when>
+			</choose>				
+		</where>
+	</select>
+	
+	<insert id="create" parameterType="RecipeDTO">
+		INSERT into recipe (id, title, content, fname, category, time, portion, ingredient, rdate)
+		VALUES(#{id},#{title},#{content},#{fname},#{category},
+		#{time},#{portion},#{ingredient},now())
+	</insert>
+	<update id="update" parameterType="RecipeDTO">
+		update recipe
+		set title = #{title}, content=#{content},
+		fname=#{fname},category=#{category},time=#{time},portion=#{portion},ingredient=#{ingredient}
+		where rno = #{rno}
+	</update>
+	
+	<delete id="delete" parameterType="int">
+		DELETE from recipe WHERE rno = #{rno}
+	</delete>
+	<update id="upViewcnt" parameterType="int">
+		update recipe set viewcnt = viewcnt + 1 
+		where rno = #{rno}
+	</update>
+	<update id="recom" parameterType="int">
+		update recipe set rcnt = rcnt + 1 
+		where rno = #{rno}
+	</update>
+</mapper>
+
+<!-- 블록설정 후 tab과 shift+tab -->

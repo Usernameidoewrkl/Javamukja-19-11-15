@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="spring.model.mapper.FindInter">
+	
+	<select id="list2" resultType="FindDTO">
+		SELECT fno, fstr, fcnt, fdate, r 
+		from(
+			SELECT fno, fstr, fcnt, fdate, @no:= @no+1 as r
+		 	from(
+		 		SELECT fno, fstr, fcnt, DATE_FORMAT(fdate, '%Y-%m-%d') as fdate, @no:=0 as no
+				from find
+				order by fcnt desc 
+				)find_list2_1
+			)find_list2_2
+	</select>
+	
+	<select id="list" parameterType="Map" resultType="FindDTO">
+		SELECT fno, fstr, fcnt, fdate, r
+		from(
+			SELECT fno, fstr, fcnt, fdate, @no:= @no+1 as r
+		 	from(
+		 		SELECT fno, fstr, fcnt, DATE_FORMAT(fdate, '%Y-%m-%d') as fdate, @no:=0 as no
+				from find
+		<where>
+				<choose>
+					<when test="col=='fno'">
+						fno like '%'||#{word}||'%'
+					</when>
+					<when test="col=='fstr'">
+						fstr like '%'||#{word}||'%'
+					</when>
+				</choose>
+			</where>           
+		order by fcnt desc
+		)find_list2
+		)find_list
+<!-- 		<![CDATA[ -->
+<!-- 		where r >= #{sno} and r <= #{eno} -->
+<!-- 		]]>   -->
+	</select>
+	
+	<select id="fstrCheck" parameterType="String" resultType="String">
+		select fno from find
+		where fstr = #{fstr}
+	</select>	
+	
+	<select id="check" parameterType="String" resultType="int">
+		select count(*) from find
+		where fstr = #{fstr}
+	</select>	
+
+	<insert id="create" parameterType="String" >
+		insert into find(fstr, fcnt, fdate)
+		values( #{fstr}, 1, now())
+	</insert>
+	
+	<update id="upFcnt" parameterType="int">
+		update find     
+		set fcnt = fcnt +1     
+		where fno = #{fno}  
+	</update>
+	
+	<select id="rank"  resultType="FindDTO">
+		<![CDATA[
+ 		select fstr
+ 		from(
+  			select fstr from find
+			order by fcnt desc) find_rank
+ 			limit 0,10
+ 			]]>
+	</select>
+	
+	<select id="read" parameterType="int" resultType="FindDTO">
+	select fno, fstr, fcnt
+	from find                             
+	where fno = #{fno}                              
+	</select>
+	
+	<update id="update" parameterType="FindDTO">   
+	update find   
+	set
+	fstr = #{fstr},    
+	fcnt = #{fcnt}   
+	where fno = #{fno}
+	</update>
+	
+	<delete id="delete" parameterType="int">
+	delete from find 
+ 	where fno = #{fno}
+	</delete>
+	
+	<delete id="deleteAll">
+	delete from find 
+	</delete>
+	
+	<update id="mRepair" parameterType="MemberDTO">
+	update member set fname = substr(fname,4) where fname like concat('(','%');
+<!-- 	update member set fname = REPLACE(fname, '(0)', ''); -->
+	</update>
+	
+	<update id="rRepair" parameterType="RecipeDTO">
+	update recipe set fname = substr(fname,4) where fname like concat('(','%');
+<!-- 	update recipe set fname = REPLACE(fname, '(0)', ''); -->
+	</update>
+	
+	<update id="tRepair" parameterType="TalkDTO">
+	update talk set fname = substr(fname,4) where fname like concat('(','%');
+<!-- 	update talk set fname = REPLACE(fname, '(0)', ''); -->
+	</update>
+	
+<select id="total" parameterType="Map" resultType="int">
+	select count(*) from find
+		<where>
+				<choose>
+					<when test="col=='fno'">
+						fno like concat('%',#{word},'%')
+					</when>
+					<when test="col=='fstr'">
+						fstr like concat('%',#{word},'%')
+					</when>
+				</choose>
+			</where>          
+	</select>	
+	
+</mapper>

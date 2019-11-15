@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="spring.model.mapper.NoticeInter">
+	
+	<update id="viewcnt" parameterType="int">
+	
+	update notice        
+	set viewcnt = viewcnt + 1 
+	where nno = #{nno}       
+	
+	</update>
+	
+	<select id="list" parameterType="Map" resultType="NoticeDTO">
+		SELECT nno,id, title,content,category,viewcnt, rdate, r
+			from(
+		SELECT nno, id, title, content, category,viewcnt, rdate, @no:= @no+1 as r
+		from(
+		select nno, id, title, content, category,viewcnt, DATE_FORMAT(rdate, '%Y-%m-%d') as rdate, @no:=0 as no
+		from notice
+		<where>
+			<choose>
+				<when test="col=='id'">
+					id like concat('%',#{word},'%')
+				</when>
+				<when test="col=='title'">
+					title like concat('%',#{word},'%')
+				</when>
+				<when test="col=='content'">
+					content like concat('%',#{word},'%')
+				</when>
+				<when test="col=='category'">
+					category like concat('%',#{word},'%')
+				</when>
+			</choose>
+
+		</where>
+
+		order by nno desc
+		)notice_list
+		)notice_list2
+	<![CDATA[
+		where r>=#{sno} and r<=#{eno}
+		]]>
+	</select>
+	<select id="total" parameterType="Map" resultType="int">
+		select count(*)
+		from notice
+		<where>
+			<choose>
+				<when test="col=='id'">
+					id like concat('%',#{word},'%')
+				</when>
+				<when test="col=='title'">
+					title like concat('%',#{word},'%')
+				</when>
+				<when test="col=='content'">
+					content like concat('%',#{word},'%')
+				</when>
+				<when test="col=='category'">
+					category like concat('%',#{word},'%')
+				</when>
+			</choose>
+
+		</where>
+	</select>
+	<select id="read" parameterType="int" resultType="NoticeDTO">
+		select
+		nno, id, title, content, category,viewcnt, rdate
+		from notice
+		where
+		nno= #{nno}
+	</select>
+	<insert id="create" parameterType="NoticeDTO">
+		INSERT INTO notice(id, title, content, category, rdate)
+		VALUES(
+		#{id}, #{title}, #{content}, #{category}, now())		
+	</insert>
+	
+	<update id="update" parameterType="NoticeDTO">
+		update notice
+		set id= #{id},
+		title= #{title},
+		content= #{content},
+		category= #{category},
+		rdate = now()
+		where nno = #{nno}
+	</update>
+	
+<delete id="delete" parameterType="int">
+		delete from notice
+		where nno = #{nno}
+	</delete>
+</mapper>

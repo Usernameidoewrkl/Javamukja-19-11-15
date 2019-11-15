@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+ 
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="spring.model.mapper.RecipeReplyInter">
+	
+	<insert id="create" parameterType="RecipeReplyDTO">
+<!-- 		<selectKey keyProperty="rrno" resultType="int" order="BEFORE"> -->
+<!-- 			select max(rrno)+1 from recipereply -->
+<!-- 		</selectKey> -->
+		insert into recipereply(rrno, id, rno, rdate, content)
+		values(#{rrno}, #{id}, #{rno}, now(), #{content})
+	</insert>
+	
+	<select id="read" parameterType="int" resultType="RecipeReplyDTO">
+		select * from recipereply
+		where rrno = #{rrno}
+	</select>
+	
+	<update id="update" parameterType="RecipeReplyDTO">
+		update recipereply
+		set content = #{content}
+		where rrno = #{rrno}
+	</update>
+	
+	<delete id="delete" parameterType="int">
+		delete from recipereply
+		where rrno = #{rrno}
+	</delete>
+	
+	<delete id="rdelete" parameterType="int">
+		delete from recipereply
+		where rno = #{rno}
+	</delete>
+<!-- select list가 자동 호출되므로 반환타입을 RecipeReplyDTO로 해도 list로 받을수 있음 -->
+	<select id="list" parameterType="Map" resultType="RecipeReplyDTO" >
+		select rrno, id, rno, rdate, content, r
+		FROM(
+		    select rrno, id, rno, rdate, content , @no:= @no+1 as r
+	        FROM(
+		        select  rrno, id, rno, DATE_FORMAT(rdate, '%Y-%m-%d') as rdate, content, @no:=0 as no
+		        from recipereply
+		        where rno = #{rno}
+		        order by rrno DESC
+		    )recipe_list
+		)recipe_list2
+		<![CDATA[
+		WHERE r >= #{sno} and r <= #{eno}
+		]]>
+	</select>
+	
+	<select id="total" parameterType="int" resultType="int">
+		select count(*) from recipereply
+		where rno = #{rno}
+	</select>
+	
+		<select id="rcount" parameterType="int" resultType="int">
+    	SELECT count(*) FROM recipereply
+     	WHERE rno = #{rno}
+    	</select>
+    	
+</mapper>
